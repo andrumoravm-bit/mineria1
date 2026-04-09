@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MineralBoard v2 — Precios Minerales USD/kg | MPPDEMIB</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080c14;--bg2:#0f1520;--card:#141c2c;--cardH:#1a2540;--brd:#1c2a44;--t1:#e2e8f0;--t2:#7a8ba0;--t3:#4a5568;--blue:#3b82f6;--cyan:#06b6d4;--grn:#10b981;--grnB:rgba(16,185,129,.07);--red:#ef4444;--redB:rgba(239,68,68,.07);--gold:#f59e0b;--chart:#0b1018;--grid:rgba(30,45,74,.3);--bull:#10b981;--bullB:#059669;--bear:#ef4444;--bearB:#dc2626;--tog:#1e2d4a;--knob:#3b82f6;--noise:.3;--accent:#6366f1;--accentB:rgba(99,102,241,.08)}
+[data-theme=light]{--bg:#f0f2f5;--bg2:#fff;--card:#f8f9fb;--cardH:#eef1f6;--brd:#d1d9e6;--t1:#1a202c;--t2:#5a6677;--t3:#8896ab;--blue:#2563eb;--cyan:#0891b2;--grn:#059669;--grnB:rgba(5,150,105,.07);--red:#dc2626;--redB:rgba(220,38,38,.07);--gold:#d97706;--chart:#fff;--grid:rgba(0,0,0,.05);--bull:#059669;--bullB:#047857;--bear:#dc2626;--bearB:#b91c1c;--tog:#d1d9e6;--knob:#2563eb;--noise:0;--accent:#4f46e5;--accentB:rgba(79,70,229,.06)}
+*{margin:0;padding:0;box-sizing:border-box}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--t3);border-radius:3px}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;transition:background .4s,color .4s}
+body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:var(--noise)}
+.M{font-family:'JetBrains Mono',monospace}
+
+/* HEADER */
+.hdr{background:var(--bg2);border-bottom:1px solid var(--brd);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-weight:700;font-size:18px;background:linear-gradient(135deg,var(--cyan),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sub{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:2px}
+.hR{display:flex;align-items:center;gap:10px}
+.thm{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}.trk{width:40px;height:20px;background:var(--tog);border-radius:10px;position:relative;border:1px solid var(--brd)}.knb{width:14px;height:14px;background:var(--knob);border-radius:50%;position:absolute;top:2px;left:2px;transition:transform .3s cubic-bezier(.4,0,.2,1)}[data-theme=light] .knb{transform:translateX(20px);background:var(--gold)}
+.sts{display:flex;align-items:center;gap:5px;font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid}.sts.ok{color:var(--grn);background:var(--grnB);border-color:rgba(16,185,129,.15)}.sts.sim{color:var(--gold);background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.15)}.sts.err{color:var(--red);background:var(--redB);border-color:rgba(239,68,68,.15)}
+.dot{width:6px;height:6px;border-radius:50%;animation:p 1.5s ease infinite}.sts.ok .dot{background:var(--grn)}.sts.sim .dot{background:var(--gold)}.sts.err .dot{background:var(--red)}@keyframes p{0%,100%{opacity:1}50%{opacity:.4}}
+.clk{font-size:11px;color:var(--t2)}.cnt{font-size:9px;color:var(--t3);background:var(--card);padding:3px 7px;border-radius:3px;border:1px solid var(--brd)}
+
+/* TOOLBAR */
+.tb{padding:6px 20px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--brd);background:var(--bg2);flex-wrap:wrap}
+.btn{font-size:10px;padding:4px 10px;border-radius:4px;border:1px solid var(--brd);background:0;color:var(--t2);cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}.btn:hover{border-color:var(--blue);color:var(--t1)}.btn.a{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn-update{background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;color:#fff;padding:5px 14px;font-weight:600;gap:4px;display:flex;align-items:center;font-size:10px;border-radius:4px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}.btn-update:hover{opacity:.85;transform:scale(1.02)}.btn-update:active{transform:scale(.98)}.btn-update.loading{opacity:.6;pointer-events:none}
+.btn-update .spinner{width:12px;height:12px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .6s linear infinite;display:none}.btn-update.loading .spinner{display:inline-block}.btn-update.loading .btn-icon{display:none}
+.sep{width:1px;height:18px;background:var(--brd)}
+
+/* TAB BAR */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--brd);background:var(--bg2)}
+.tab{padding:8px 16px;font-size:11px;color:var(--t2);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;font-weight:500}.tab:hover{color:var(--t1);background:var(--cardH)}.tab.a{color:var(--blue);border-bottom-color:var(--blue);background:var(--card)}
+
+/* MINERAL STRIP */
+.sbar{display:flex;gap:0;padding:0;overflow-x:auto;border-bottom:1px solid var(--brd);background:var(--bg2)}
+.si{padding:8px 14px;border-right:1px solid var(--brd);min-width:120px;cursor:pointer;flex-shrink:0;transition:background .2s}.si:hover{background:var(--cardH)}.si.a{background:var(--card);border-bottom:2px solid var(--blue)}
+.sn{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}.sp{font-size:14px;font-weight:600}.sc{font-size:10px}.up{color:var(--grn)}.dn{color:var(--red)}
+
+/* MAIN LAYOUT */
+.ml{display:grid;grid-template-columns:1fr 340px;height:calc(100vh - 200px)}
+
+/* CHART AREA */
+.ca{padding:14px 18px;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.ch{display:flex;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px}.ci{width:34px;height:34px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}.cn{font-size:20px;font-weight:700}.cu{font-size:10px;color:var(--t3)}.cp{font-size:26px;font-weight:700;text-align:right}.cc{font-size:12px;text-align:right}
+.ccs{display:flex;gap:3px;margin-bottom:8px;align-items:center;flex-wrap:wrap}.ccb{font-size:9px;padding:3px 9px;border-radius:3px;border:1px solid var(--brd);background:0;color:var(--t2);cursor:pointer;font-family:'JetBrains Mono',monospace}.ccb.a{background:var(--blue);border-color:var(--blue);color:#fff}
+.badge{font-size:9px;padding:2px 7px;border-radius:3px;border:1px solid;margin-left:auto}.badge.ok{color:var(--grn);border-color:rgba(16,185,129,.3)}.badge.sim{color:var(--gold);border-color:rgba(245,158,11,.3)}
+.ccon{flex:1;background:var(--chart);border:1px solid var(--brd);border-radius:6px;overflow:hidden;min-height:250px;transition:background .4s}canvas{display:block}
+
+/* SIDEBAR TABLE */
+.side{border-left:1px solid var(--brd);background:var(--bg2);display:flex;flex-direction:column;overflow:hidden}
+.sh{padding:10px 14px;border-bottom:1px solid var(--brd);font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--t3);display:flex;justify-content:space-between;align-items:center}.scnt{background:var(--blue);color:#fff;padding:1px 5px;border-radius:3px;font-size:9px}
+.tw{flex:1;overflow-y:auto}
+table{width:100%;border-collapse:collapse}th{position:sticky;top:0;background:var(--card);font-size:8px;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);padding:7px 8px;text-align:left;border-bottom:1px solid var(--brd);z-index:1}th:nth-child(n+2){text-align:right}
+td{padding:7px 8px;border-bottom:1px solid rgba(30,45,74,.2);font-size:10px;transition:background .3s}td:nth-child(n+2){text-align:right}tr{cursor:pointer;transition:background .15s}tr:hover{background:var(--cardH)}tr.a{background:var(--card)}
+.mc{display:flex;align-items:center;gap:6px}.md{width:7px;height:7px;border-radius:2px}.ms{font-weight:600}.mf{font-size:8px;color:var(--t3);display:block;margin-top:1px}
+.pf{animation:fl .6s ease}@keyframes fl{0%{background:rgba(59,130,246,.12)}100%{background:transparent}}
+.cb{display:inline-block;padding:1px 4px;border-radius:2px;font-size:9px;font-weight:500}.cb.up{background:var(--grnB);color:var(--grn)}.cb.dn{background:var(--redB);color:var(--red)}
+
+/* BOTTOM STATS */
+.bs{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--brd);background:var(--bg2)}.sb{padding:8px 14px;border-right:1px solid var(--brd);text-align:center}.sl{font-size:8px;text-transform:uppercase;letter-spacing:1px;color:var(--t3)}.sv{font-size:13px;font-weight:600}
+
+/* RESPONSIVE */
+@media(max-width:960px){
+  .ml{grid-template-columns:1fr;height:auto}
+  .ca{min-height:380px}
+  .side{border-left:none;border-top:1px solid var(--brd);max-height:320px}
+  .ccon{min-height:220px}
+}
+@media(max-width:640px){
+  .hdr{padding:8px 12px;flex-wrap:wrap;gap:6px}
+  .logo{font-size:15px}.sub{font-size:7px;letter-spacing:1px}
+  .hR{gap:5px;flex-wrap:wrap;justify-content:flex-end}
+  .clk{font-size:9px}.cnt{font-size:8px;padding:2px 5px}.last-update{font-size:8px;padding:2px 5px}
+  .sts{font-size:8px;padding:2px 6px}.thm span.M{display:none}
+  .tb{padding:5px 10px;gap:4px}.btn{font-size:9px;padding:3px 7px}.btn-update{font-size:9px;padding:4px 10px}.sep{height:14px}
+  .tab{padding:6px 10px;font-size:10px}
+  .sbar{-webkit-overflow-scrolling:touch}.si{padding:6px 10px;min-width:95px}.sn{font-size:9px}.sp{font-size:12px}.sc{font-size:9px}
+  .ca{padding:10px 12px;min-height:320px}.cn{font-size:16px}.cp{font-size:20px}.cc{font-size:10px}.cu{font-size:8px}.ci{width:28px;height:28px;font-size:11px}.ccon{min-height:180px}
+  .side{max-height:260px}td{padding:5px 6px;font-size:9px}th{padding:5px 6px;font-size:7px}
+  .bs{grid-template-columns:repeat(3,1fr)}.sb{padding:6px 8px}.sl{font-size:7px}.sv{font-size:11px}
+  .hist-panel{height:auto;max-height:calc(100vh - 160px)}.hist-header{padding:10px 12px;flex-wrap:wrap;gap:8px}.hist-title{font-size:12px}.hist-grid{padding:10px 12px}
+  .hist-table td,.hist-table th{padding:5px 6px;font-size:8px}#histMineral{font-size:9px;padding:3px 6px}
+}
+@media(max-width:380px){
+  .logo{font-size:13px}.sub{display:none}.hR{gap:4px}.clk,.cnt,.last-update{font-size:7px}
+  .cn{font-size:14px}.cp{font-size:16px}.bs{grid-template-columns:repeat(2,1fr)}
+}
+
+/* HISTORY PANEL */
+.hist-panel{display:none;flex-direction:column;height:calc(100vh - 200px);overflow:hidden}
+.hist-panel.active{display:flex}
+.ml.hidden{display:none}
+.hist-grid{flex:1;overflow-y:auto;padding:16px 20px}
+.hist-header{padding:14px 20px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;background:var(--bg2)}
+.hist-title{font-size:14px;font-weight:600}
+.hist-subtitle{font-size:10px;color:var(--t3)}
+.hist-table{width:100%;border-collapse:collapse;font-size:11px}
+.hist-table thead{position:sticky;top:0;z-index:2}
+.hist-table th{background:var(--card);padding:8px 10px;text-align:right;font-size:8px;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);border-bottom:1px solid var(--brd)}
+.hist-table th:first-child{text-align:left}
+.hist-table td{padding:7px 10px;text-align:right;border-bottom:1px solid rgba(30,45,74,.15);font-size:10px}
+.hist-table td:first-child{text-align:left;font-weight:500;color:var(--t2)}
+.hist-table tr:hover{background:var(--cardH)}
+.hist-table .today{background:var(--accentB);font-weight:600}
+.hist-empty{text-align:center;padding:60px 20px;color:var(--t3)}
+.hist-empty .icon{font-size:40px;margin-bottom:12px}
+
+/* LOADING */
+.lo{position:fixed;inset:0;z-index:10000;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s}.lo.h{opacity:0;pointer-events:none}.lsp{width:40px;height:40px;border:3px solid var(--brd);border-top-color:var(--blue);border-radius:50%;animation:sp .8s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}.lt{font-size:12px;color:var(--t2);margin-top:14px}
+
+/* LAST UPDATE BADGE */
+.last-update{font-size:9px;color:var(--t3);background:var(--card);padding:3px 8px;border-radius:3px;border:1px solid var(--brd)}
+</style>
+</head>
+<body data-theme="dark">
+<div class="lo" id="lo"><div class="lsp"></div><div class="lt M" id="ltx">Conectando...</div></div>
+
+<div class="hdr">
+  <div><div class="logo M">⬡ MINERALBOARD</div><div class="sub M">MPPDEMIB — Panel de Precios Minerales en Tiempo Real</div></div>
+  <div class="hR">
+    <div class="thm" id="thm"><span id="ti">🌙</span><div class="trk"><div class="knb"></div></div><span class="M" style="font-size:9px;color:var(--t2)" id="tl">Oscuro</span></div>
+    <div class="sts sim M" id="sts"><div class="dot"></div><span id="stx">CONECTANDO</span></div>
+    <div class="clk M" id="clk">--:--:--</div>
+    <div class="last-update M" id="lastUpd">Última act: --</div>
+    <div class="cnt M" id="cnt">Ticks: 0</div>
+  </div>
+</div>
+
+<div class="tb M">
+  <button class="btn-update" id="btnUpdate" onclick="manualUpdate()">
+    <span class="btn-icon">🔄</span>
+    <span class="spinner"></span>
+    Actualizar
+  </button>
+  <div class="sep"></div>
+  <button class="btn a" data-f="all">Todos (10)</button>
+  <button class="btn" data-f="precious">Preciosos</button>
+  <button class="btn" data-f="base">Base</button>
+  <div class="sep"></div>
+  <button class="btn a" id="tct">📊 Velas</button>
+  <button class="btn" id="tln">📈 Línea</button>
+</div>
+
+<!-- TABS: Panel de Control / Historial -->
+<div class="tabs M">
+  <div class="tab a" data-tab="dashboard" onclick="switchTab('dashboard')">📊 Panel de Control</div>
+  <div class="tab" data-tab="history" onclick="switchTab('history')">📅 Historial de Días</div>
+</div>
+
+<!-- MINERAL STRIP -->
+<div class="sbar" id="sbar"></div>
+
+<!-- DASHBOARD VIEW -->
+<div class="ml" id="mainLayout">
+  <div class="ca">
+    <div class="ch">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="ci M" id="cic">Au</div>
+        <div><div class="cn" id="cnm">Oro</div><div class="cu M" id="cun">USD/kg — COMEX</div></div>
+      </div>
+      <div><div class="cp M" id="cpx">—</div><div class="cc M" id="ccx">—</div></div>
+    </div>
+    <div class="ccs M">
+      <button class="ccb" data-r="1">1D</button><button class="ccb" data-r="5">5D</button><button class="ccb a" data-r="10">10D</button><button class="ccb" data-r="0">Todo</button>
+      <div class="badge sim M" id="bdg">⏳ Conectando...</div>
+    </div>
+    <div class="ccon"><canvas id="mc"></canvas></div>
+  </div>
+  <div class="side">
+    <div class="sh M"><span>Metales — USD/kg</span><span class="scnt" id="mcnt">10</span></div>
+    <div class="tw"><table class="M"><thead><tr><th>Mineral</th><th>USD/kg</th><th>% Var</th><th>Bolsa</th></tr></thead><tbody id="tb"></tbody></table></div>
+  </div>
+</div>
+
+<!-- HISTORY VIEW -->
+<div class="hist-panel" id="histPanel">
+  <div class="hist-header">
+    <div>
+      <div class="hist-title">📅 Historial de Precios</div>
+      <div class="hist-subtitle M" id="histSubtitle">Cargando datos históricos...</div>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <select id="histMineral" class="M" style="font-size:10px;padding:4px 8px;border-radius:4px;border:1px solid var(--brd);background:var(--card);color:var(--t1);cursor:pointer">
+        <option value="all">Todos los minerales</option>
+      </select>
+    </div>
+  </div>
+  <div class="hist-grid">
+    <div class="hist-empty" id="histEmpty">
+      <div class="icon">📭</div>
+      <div style="font-size:13px;margin-bottom:6px">Sin datos históricos</div>
+      <div style="font-size:10px">Los datos se cargarán desde la base de datos</div>
+    </div>
+    <table class="hist-table M" id="histTable" style="display:none">
+      <thead id="histThead"></thead>
+      <tbody id="histTbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="bs M">
+  <div class="sb"><div class="sl">Máx Día</div><div class="sv" id="sH">—</div></div>
+  <div class="sb"><div class="sl">Mín Día</div><div class="sv" id="sL">—</div></div>
+  <div class="sb"><div class="sl">% Var Diaria</div><div class="sv" id="sV">—</div></div>
+  <div class="sb"><div class="sl">Precio Anterior</div><div class="sv" id="sP">—</div></div>
+  <div class="sb"><div class="sl">Fuente</div><div class="sv" id="sS" style="font-size:9px">—</div></div>
+</div>
+
+<script>
+// ================================================================
+// ⚡ CONFIGURACIÓN — PEGAR AQUÍ TUS URLs DE GOOGLE SHEETS CSV
+// ================================================================
+// Hoja "Datos" — precios actuales
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQQjMsFwwlYFVo-618fjoUcF7k8klPIEdLW5wZcwy5R-Mcr3YRqWoGeKO66sVVW8uGVE3DjbkyG5pxy/pub?gid=1978501024&single=true&output=csv';
+
+// Hoja "Historial" — datos diarios
+const HISTORY_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQQjMsFwwlYFVo-618fjoUcF7k8klPIEdLW5wZcwy5R-Mcr3YRqWoGeKO66sVVW8uGVE3DjbkyG5pxy/pub?gid=810961100&single=true&output=csv';
+
+const SHEET_INTERVAL = 30000;
+
+// ================================================================
+// FORMATO NUMÉRICO VENEZOLANO: 147.456,29
+// Miles separados por . y decimales por ,
+// ================================================================
+function fmtES(v, decimals) {
+  if (v == null || isNaN(v)) return '—';
+  const d = decimals != null ? decimals : (v >= 10000 ? 2 : v >= 1 ? 4 : 6);
+  const parts = Math.abs(v).toFixed(d).split('.');
+  // Add thousands separator with .
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return (v < 0 ? '-' : '') + parts[0] + ',' + parts[1];
+}
+
+// Price formatting — always Venezuelan style
+function fp(v) {
+  if (v == null || isNaN(v)) return '—';
+  return '$' + fmtES(v, 2);
+}
+
+// Change formatting
+function fc(v) {
+  if (v == null || isNaN(v)) return '—';
+  const sign = v >= 0 ? '+' : '';
+  return sign + fmtES(v, 2);
+}
+
+// Percent formatting
+function fpct(v) {
+  if (v == null || isNaN(v)) return '—';
+  return (v >= 0 ? '+' : '') + fmtES(v, 2) + '%';
+}
+
+// ================================================================
+// 10 MINERALES
+// ================================================================
+const DB = [
+  {id:'gold',sym:'Au',name:'Oro',cat:'precious',color:'#FFD700',ex:'COMEX',rawU:'USD/troy oz',fac:32.1507,raw:4586.41,rawMx:4868.25,rawMn:4505.31,rawV:-309.79,pct:-6.33},
+  {id:'silver',sym:'Ag',name:'Plata',cat:'precious',color:'#C0C0C0',ex:'COMEX',rawU:'USD/troy oz',fac:32.1507,raw:69.66,rawMx:76.755,rawMn:65.638,rawV:-7.932,pct:-10.22},
+  {id:'plat',sym:'Pt',name:'Platino',cat:'precious',color:'#E5E4E2',ex:'NYMEX',rawU:'USD/troy oz',fac:32.1507,raw:1928.15,rawMx:2050.50,rawMn:1858.70,rawV:-128.45,pct:-6.25},
+  {id:'pall',sym:'Pd',name:'Paladio',cat:'precious',color:'#CED0CE',ex:'NYMEX',rawU:'USD/troy oz',fac:32.1507,raw:1448.00,rawMx:1519.00,rawMn:1412.50,rawV:-88.60,pct:-5.77},
+  {id:'copper',sym:'Cu',name:'Cobre',cat:'base',color:'#B87333',ex:'COMEX',rawU:'USD/lb',fac:2.20462,raw:5.4558,rawMx:5.5535,rawMn:5.2985,rawV:-0.1382,pct:-2.47},
+  {id:'alum',sym:'Al',name:'Aluminio',cat:'base',color:'#A8A9AD',ex:'LME',rawU:'USD/mt',fac:0.001,raw:3251.15,rawMx:3358.50,rawMn:3130.83,rawV:-164.03,pct:-4.80},
+  {id:'nickel',sym:'Ni',name:'Níquel',cat:'base',color:'#727472',ex:'LME',rawU:'USD/mt',fac:0.001,raw:16921.00,rawMx:17049.25,rawMn:16350.50,rawV:-233.13,pct:-1.36},
+  {id:'zinc',sym:'Zn',name:'Zinc',cat:'base',color:'#7D7D7D',ex:'LME',rawU:'USD/mt',fac:0.001,raw:3080.75,rawMx:3139.05,rawMn:3030.65,rawV:-60.70,pct:-1.93},
+  {id:'tin',sym:'Sn',name:'Estaño',cat:'base',color:'#D3D4D5',ex:'LME',rawU:'USD/mt',fac:0.001,raw:46625.00,rawMx:46625.00,rawMn:46625.00,rawV:-1644.00,pct:-3.41},
+  {id:'lead',sym:'Pb',name:'Plomo',cat:'base',color:'#5C5C5C',ex:'LME',rawU:'USD/mt',fac:0.001,raw:1887.65,rawMx:1917.75,rawMn:1875.55,rawV:-29.08,pct:-1.52},
+];
+
+// ================================================================
+// STATE
+// ================================================================
+let M=[], sel=null, cType='candle', cRange=10, ticks=0, filter='all', src='sim';
+let sheetsOK=false, lastSheetData=null, historyData=[], lastUpdateTime=null;
+let hoverX=-1, hoverY=-1, hoverActive=false;
+
+// ================================================================
+// DATOS HISTÓRICOS EMBEBIDOS (90 días: ene 10 → abr 9, 2026)
+// Se usan como base. Google Sheets los actualiza/extiende.
+// ================================================================
+const HIST_EMBED=[{"fecha": "2026-01-10", "Oro": 138450.34, "Plata": 2186.26, "Platino": 61915.75, "Paladio": 45260.23, "Cobre": 11.89, "Aluminio": 2.83, "Niquel": 15.84, "Zinc": 3.06, "Estaño": 44.97, "Plomo": 1.79}, {"fecha": "2026-01-11", "Oro": 138370.39, "Plata": 2216.56, "Platino": 62278.6, "Paladio": 45260.54, "Cobre": 11.88, "Aluminio": 2.83, "Niquel": 15.64, "Zinc": 3.03, "Estaño": 44.83, "Plomo": 1.76}, {"fecha": "2026-01-12", "Oro": 138360.54, "Plata": 2241.98, "Platino": 62196.45, "Paladio": 45245.27, "Cobre": 11.97, "Aluminio": 2.81, "Niquel": 15.74, "Zinc": 3.02, "Estaño": 44.69, "Plomo": 1.74}, {"fecha": "2026-01-13", "Oro": 139252.3, "Plata": 2250.85, "Platino": 61315.08, "Paladio": 45453.71, "Cobre": 12.05, "Aluminio": 2.82, "Niquel": 15.9, "Zinc": 3.03, "Estaño": 44.72, "Plomo": 1.73}, {"fecha": "2026-01-14", "Oro": 139220.02, "Plata": 2225.0, "Platino": 61640.44, "Paladio": 45104.49, "Cobre": 12.05, "Aluminio": 2.8, "Niquel": 15.91, "Zinc": 3.05, "Estaño": 45.16, "Plomo": 1.73}, {"fecha": "2026-01-15", "Oro": 137663.71, "Plata": 2250.78, "Platino": 61658.48, "Paladio": 44535.57, "Cobre": 11.96, "Aluminio": 2.83, "Niquel": 15.85, "Zinc": 3.01, "Estaño": 45.3, "Plomo": 1.73}, {"fecha": "2026-01-16", "Oro": 138153.51, "Plata": 2262.57, "Platino": 61245.27, "Paladio": 43587.51, "Cobre": 11.86, "Aluminio": 2.81, "Niquel": 16.0, "Zinc": 3.02, "Estaño": 45.18, "Plomo": 1.73}, {"fecha": "2026-01-17", "Oro": 137979.82, "Plata": 2297.3, "Platino": 61615.41, "Paladio": 43795.72, "Cobre": 11.79, "Aluminio": 2.8, "Niquel": 15.71, "Zinc": 3.05, "Estaño": 45.49, "Plomo": 1.71}, {"fecha": "2026-01-18", "Oro": 137864.86, "Plata": 2297.67, "Platino": 61963.92, "Paladio": 44023.47, "Cobre": 11.7, "Aluminio": 2.8, "Niquel": 15.74, "Zinc": 3.04, "Estaño": 46.39, "Plomo": 1.71}, {"fecha": "2026-01-19", "Oro": 138119.58, "Plata": 2352.72, "Platino": 61651.83, "Paladio": 44552.73, "Cobre": 11.8, "Aluminio": 2.81, "Niquel": 15.77, "Zinc": 3.04, "Estaño": 46.99, "Plomo": 1.71}, {"fecha": "2026-01-20", "Oro": 138502.85, "Plata": 2343.39, "Platino": 61947.34, "Paladio": 44985.32, "Cobre": 11.8, "Aluminio": 2.84, "Niquel": 15.71, "Zinc": 3.06, "Estaño": 47.28, "Plomo": 1.71}, {"fecha": "2026-01-21", "Oro": 139917.39, "Plata": 2389.07, "Platino": 62623.2, "Paladio": 44933.26, "Cobre": 11.98, "Aluminio": 2.84, "Niquel": 15.89, "Zinc": 3.06, "Estaño": 46.82, "Plomo": 1.72}, {"fecha": "2026-01-22", "Oro": 140768.39, "Plata": 2392.92, "Platino": 62219.37, "Paladio": 45643.41, "Cobre": 12.23, "Aluminio": 2.82, "Niquel": 16.03, "Zinc": 3.08, "Estaño": 48.41, "Plomo": 1.73}, {"fecha": "2026-01-23", "Oro": 141003.73, "Plata": 2378.62, "Platino": 62502.52, "Paladio": 45613.23, "Cobre": 12.24, "Aluminio": 2.81, "Niquel": 16.0, "Zinc": 3.08, "Estaño": 47.89, "Plomo": 1.73}, {"fecha": "2026-01-24", "Oro": 140281.36, "Plata": 2347.05, "Platino": 62548.78, "Paladio": 45320.69, "Cobre": 12.07, "Aluminio": 2.8, "Niquel": 16.0, "Zinc": 3.09, "Estaño": 47.74, "Plomo": 1.73}, {"fecha": "2026-01-25", "Oro": 139260.39, "Plata": 2343.7, "Platino": 64010.89, "Paladio": 45103.06, "Cobre": 12.04, "Aluminio": 2.82, "Niquel": 15.96, "Zinc": 3.07, "Estaño": 47.44, "Plomo": 1.73}, {"fecha": "2026-01-26", "Oro": 139662.45, "Plata": 2384.67, "Platino": 62852.32, "Paladio": 44857.14, "Cobre": 12.04, "Aluminio": 2.83, "Niquel": 15.91, "Zinc": 3.07, "Estaño": 48.15, "Plomo": 1.73}, {"fecha": "2026-01-27", "Oro": 141253.37, "Plata": 2408.65, "Platino": 63332.82, "Paladio": 43835.35, "Cobre": 11.88, "Aluminio": 2.83, "Niquel": 15.75, "Zinc": 3.1, "Estaño": 48.34, "Plomo": 1.73}, {"fecha": "2026-01-28", "Oro": 141414.98, "Plata": 2428.99, "Platino": 63178.95, "Paladio": 43966.74, "Cobre": 11.87, "Aluminio": 2.85, "Niquel": 15.94, "Zinc": 3.1, "Estaño": 47.72, "Plomo": 1.71}, {"fecha": "2026-01-29", "Oro": 141409.49, "Plata": 2360.0, "Platino": 63157.6, "Paladio": 44143.29, "Cobre": 11.91, "Aluminio": 2.84, "Niquel": 16.08, "Zinc": 3.1, "Estaño": 47.84, "Plomo": 1.72}, {"fecha": "2026-01-30", "Oro": 142127.55, "Plata": 2380.99, "Platino": 64401.33, "Paladio": 44022.35, "Cobre": 11.87, "Aluminio": 2.84, "Niquel": 16.19, "Zinc": 3.09, "Estaño": 48.08, "Plomo": 1.71}, {"fecha": "2026-01-31", "Oro": 140586.76, "Plata": 2397.55, "Platino": 64428.35, "Paladio": 43733.5, "Cobre": 11.79, "Aluminio": 2.84, "Niquel": 16.06, "Zinc": 3.11, "Estaño": 47.95, "Plomo": 1.7}, {"fecha": "2026-02-01", "Oro": 140362.71, "Plata": 2382.28, "Platino": 65904.93, "Paladio": 43972.57, "Cobre": 11.72, "Aluminio": 2.87, "Niquel": 16.33, "Zinc": 3.09, "Estaño": 47.43, "Plomo": 1.69}, {"fecha": "2026-02-02", "Oro": 141044.4, "Plata": 2365.04, "Platino": 65633.58, "Paladio": 44861.98, "Cobre": 11.92, "Aluminio": 2.87, "Niquel": 16.6, "Zinc": 3.11, "Estaño": 47.13, "Plomo": 1.7}, {"fecha": "2026-02-03", "Oro": 142156.77, "Plata": 2365.84, "Platino": 65886.45, "Paladio": 44932.63, "Cobre": 11.91, "Aluminio": 2.87, "Niquel": 16.63, "Zinc": 3.09, "Estaño": 46.96, "Plomo": 1.7}, {"fecha": "2026-02-04", "Oro": 142001.65, "Plata": 2415.67, "Platino": 65583.88, "Paladio": 44733.65, "Cobre": 11.84, "Aluminio": 2.85, "Niquel": 16.51, "Zinc": 3.07, "Estaño": 46.99, "Plomo": 1.72}, {"fecha": "2026-02-05", "Oro": 142551.32, "Plata": 2385.5, "Platino": 65154.9, "Paladio": 44497.21, "Cobre": 11.81, "Aluminio": 2.87, "Niquel": 16.41, "Zinc": 3.08, "Estaño": 46.78, "Plomo": 1.72}, {"fecha": "2026-02-06", "Oro": 142952.93, "Plata": 2373.96, "Platino": 65224.07, "Paladio": 44520.78, "Cobre": 11.92, "Aluminio": 2.86, "Niquel": 16.47, "Zinc": 3.08, "Estaño": 47.11, "Plomo": 1.71}, {"fecha": "2026-02-07", "Oro": 143964.19, "Plata": 2413.59, "Platino": 65068.02, "Paladio": 43959.8, "Cobre": 11.85, "Aluminio": 2.86, "Niquel": 16.35, "Zinc": 3.09, "Estaño": 46.72, "Plomo": 1.7}, {"fecha": "2026-02-08", "Oro": 142790.61, "Plata": 2401.12, "Platino": 65230.03, "Paladio": 43964.12, "Cobre": 11.92, "Aluminio": 2.83, "Niquel": 16.36, "Zinc": 3.12, "Estaño": 46.02, "Plomo": 1.71}, {"fecha": "2026-02-09", "Oro": 143561.81, "Plata": 2391.21, "Platino": 63886.05, "Paladio": 44059.64, "Cobre": 12.01, "Aluminio": 2.85, "Niquel": 16.51, "Zinc": 3.11, "Estaño": 45.74, "Plomo": 1.7}, {"fecha": "2026-02-10", "Oro": 141938.7, "Plata": 2394.72, "Platino": 65208.64, "Paladio": 45019.75, "Cobre": 12.1, "Aluminio": 2.83, "Niquel": 16.32, "Zinc": 3.12, "Estaño": 46.32, "Plomo": 1.69}, {"fecha": "2026-02-11", "Oro": 139098.83, "Plata": 2359.72, "Platino": 65130.11, "Paladio": 45544.25, "Cobre": 12.26, "Aluminio": 2.81, "Niquel": 16.59, "Zinc": 3.11, "Estaño": 46.11, "Plomo": 1.69}, {"fecha": "2026-02-12", "Oro": 138590.85, "Plata": 2367.0, "Platino": 66296.98, "Paladio": 46115.05, "Cobre": 12.2, "Aluminio": 2.84, "Niquel": 16.8, "Zinc": 3.14, "Estaño": 47.11, "Plomo": 1.69}, {"fecha": "2026-02-13", "Oro": 137751.27, "Plata": 2333.64, "Platino": 65649.08, "Paladio": 45800.99, "Cobre": 12.34, "Aluminio": 2.81, "Niquel": 16.64, "Zinc": 3.15, "Estaño": 47.33, "Plomo": 1.69}, {"fecha": "2026-02-14", "Oro": 138904.79, "Plata": 2359.81, "Platino": 65868.34, "Paladio": 46190.39, "Cobre": 12.25, "Aluminio": 2.81, "Niquel": 16.46, "Zinc": 3.16, "Estaño": 46.85, "Plomo": 1.68}, {"fecha": "2026-02-15", "Oro": 139821.77, "Plata": 2361.01, "Platino": 67978.31, "Paladio": 45659.99, "Cobre": 12.22, "Aluminio": 2.82, "Niquel": 16.43, "Zinc": 3.17, "Estaño": 46.52, "Plomo": 1.68}, {"fecha": "2026-02-16", "Oro": 138629.96, "Plata": 2426.82, "Platino": 67388.95, "Paladio": 45872.11, "Cobre": 12.36, "Aluminio": 2.8, "Niquel": 16.3, "Zinc": 3.15, "Estaño": 46.64, "Plomo": 1.66}, {"fecha": "2026-02-17", "Oro": 139758.58, "Plata": 2435.38, "Platino": 66389.99, "Paladio": 46137.46, "Cobre": 12.46, "Aluminio": 2.83, "Niquel": 16.28, "Zinc": 3.15, "Estaño": 46.17, "Plomo": 1.67}, {"fecha": "2026-02-18", "Oro": 138817.34, "Plata": 2475.58, "Platino": 66047.79, "Paladio": 45800.49, "Cobre": 12.46, "Aluminio": 2.86, "Niquel": 15.95, "Zinc": 3.16, "Estaño": 47.19, "Plomo": 1.66}, {"fecha": "2026-02-19", "Oro": 138915.74, "Plata": 2436.68, "Platino": 66385.01, "Paladio": 46864.87, "Cobre": 12.34, "Aluminio": 2.83, "Niquel": 15.94, "Zinc": 3.16, "Estaño": 46.79, "Plomo": 1.68}, {"fecha": "2026-02-20", "Oro": 138786.05, "Plata": 2433.39, "Platino": 66866.81, "Paladio": 47202.57, "Cobre": 12.4, "Aluminio": 2.8, "Niquel": 16.18, "Zinc": 3.17, "Estaño": 47.1, "Plomo": 1.67}, {"fecha": "2026-02-21", "Oro": 139115.75, "Plata": 2443.15, "Platino": 67745.6, "Paladio": 46256.55, "Cobre": 12.34, "Aluminio": 2.82, "Niquel": 16.05, "Zinc": 3.14, "Estaño": 47.74, "Plomo": 1.66}, {"fecha": "2026-02-22", "Oro": 140229.59, "Plata": 2494.55, "Platino": 67576.56, "Paladio": 46592.76, "Cobre": 12.25, "Aluminio": 2.8, "Niquel": 16.03, "Zinc": 3.15, "Estaño": 47.7, "Plomo": 1.67}, {"fecha": "2026-02-23", "Oro": 141138.42, "Plata": 2443.78, "Platino": 66501.21, "Paladio": 46435.66, "Cobre": 12.18, "Aluminio": 2.79, "Niquel": 15.85, "Zinc": 3.13, "Estaño": 47.29, "Plomo": 1.66}, {"fecha": "2026-02-24", "Oro": 141718.28, "Plata": 2473.04, "Platino": 66233.81, "Paladio": 46491.31, "Cobre": 12.22, "Aluminio": 2.8, "Niquel": 15.95, "Zinc": 3.11, "Estaño": 47.19, "Plomo": 1.66}, {"fecha": "2026-02-25", "Oro": 142636.25, "Plata": 2490.41, "Platino": 67081.29, "Paladio": 46784.95, "Cobre": 12.0, "Aluminio": 2.82, "Niquel": 15.94, "Zinc": 3.11, "Estaño": 47.36, "Plomo": 1.67}, {"fecha": "2026-02-26", "Oro": 143354.75, "Plata": 2535.82, "Platino": 67408.48, "Paladio": 47038.56, "Cobre": 12.05, "Aluminio": 2.82, "Niquel": 16.2, "Zinc": 3.07, "Estaño": 47.76, "Plomo": 1.67}, {"fecha": "2026-02-27", "Oro": 142802.04, "Plata": 2556.41, "Platino": 66099.84, "Paladio": 46033.72, "Cobre": 12.08, "Aluminio": 2.82, "Niquel": 16.24, "Zinc": 3.09, "Estaño": 47.79, "Plomo": 1.65}, {"fecha": "2026-02-28", "Oro": 142160.99, "Plata": 2556.59, "Platino": 66106.58, "Paladio": 45513.37, "Cobre": 12.03, "Aluminio": 2.81, "Niquel": 16.21, "Zinc": 3.11, "Estaño": 47.2, "Plomo": 1.66}, {"fecha": "2026-03-01", "Oro": 141819.06, "Plata": 2539.14, "Platino": 67061.41, "Paladio": 45975.84, "Cobre": 12.16, "Aluminio": 2.84, "Niquel": 16.29, "Zinc": 3.12, "Estaño": 47.24, "Plomo": 1.66}, {"fecha": "2026-03-02", "Oro": 142588.34, "Plata": 2499.89, "Platino": 68504.15, "Paladio": 46704.38, "Cobre": 12.24, "Aluminio": 2.83, "Niquel": 16.24, "Zinc": 3.1, "Estaño": 46.98, "Plomo": 1.68}, {"fecha": "2026-03-03", "Oro": 142498.98, "Plata": 2505.12, "Platino": 68883.23, "Paladio": 47742.95, "Cobre": 12.18, "Aluminio": 2.84, "Niquel": 16.08, "Zinc": 3.08, "Estaño": 46.08, "Plomo": 1.69}, {"fecha": "2026-03-04", "Oro": 145364.41, "Plata": 2498.62, "Platino": 69084.29, "Paladio": 48735.56, "Cobre": 12.12, "Aluminio": 2.84, "Niquel": 16.14, "Zinc": 3.08, "Estaño": 45.84, "Plomo": 1.72}, {"fecha": "2026-03-05", "Oro": 144572.21, "Plata": 2558.55, "Platino": 68211.83, "Paladio": 47663.96, "Cobre": 12.21, "Aluminio": 2.84, "Niquel": 16.13, "Zinc": 3.03, "Estaño": 45.29, "Plomo": 1.71}, {"fecha": "2026-03-06", "Oro": 143480.02, "Plata": 2538.1, "Platino": 67635.46, "Paladio": 48117.0, "Cobre": 12.06, "Aluminio": 2.84, "Niquel": 16.17, "Zinc": 3.04, "Estaño": 45.59, "Plomo": 1.71}, {"fecha": "2026-03-07", "Oro": 144565.37, "Plata": 2546.47, "Platino": 67676.16, "Paladio": 47145.79, "Cobre": 12.04, "Aluminio": 2.84, "Niquel": 16.24, "Zinc": 3.06, "Estaño": 46.44, "Plomo": 1.7}, {"fecha": "2026-03-08", "Oro": 146399.47, "Plata": 2496.95, "Platino": 68025.2, "Paladio": 48044.63, "Cobre": 11.98, "Aluminio": 2.83, "Niquel": 16.19, "Zinc": 3.06, "Estaño": 47.26, "Plomo": 1.72}, {"fecha": "2026-03-09", "Oro": 147152.96, "Plata": 2484.41, "Platino": 68422.08, "Paladio": 48225.63, "Cobre": 12.01, "Aluminio": 2.85, "Niquel": 16.26, "Zinc": 3.05, "Estaño": 47.04, "Plomo": 1.73}, {"fecha": "2026-03-10", "Oro": 148288.76, "Plata": 2491.72, "Platino": 68089.49, "Paladio": 47665.38, "Cobre": 12.05, "Aluminio": 2.88, "Niquel": 16.51, "Zinc": 3.06, "Estaño": 46.88, "Plomo": 1.74}, {"fecha": "2026-03-11", "Oro": 150115.04, "Plata": 2515.72, "Platino": 67306.22, "Paladio": 48777.04, "Cobre": 12.07, "Aluminio": 2.89, "Niquel": 16.37, "Zinc": 3.08, "Estaño": 47.21, "Plomo": 1.74}, {"fecha": "2026-03-12", "Oro": 150103.16, "Plata": 2558.28, "Platino": 66800.04, "Paladio": 49159.39, "Cobre": 12.21, "Aluminio": 2.91, "Niquel": 16.62, "Zinc": 3.1, "Estaño": 47.69, "Plomo": 1.74}, {"fecha": "2026-03-13", "Oro": 148499.33, "Plata": 2554.81, "Platino": 66055.97, "Paladio": 48166.7, "Cobre": 12.25, "Aluminio": 2.93, "Niquel": 16.6, "Zinc": 3.11, "Estaño": 47.53, "Plomo": 1.72}, {"fecha": "2026-03-14", "Oro": 148011.65, "Plata": 2518.45, "Platino": 66527.37, "Paladio": 48375.3, "Cobre": 12.24, "Aluminio": 2.95, "Niquel": 16.51, "Zinc": 3.1, "Estaño": 47.49, "Plomo": 1.74}, {"fecha": "2026-03-15", "Oro": 149301.21, "Plata": 2530.94, "Platino": 65026.36, "Paladio": 48036.59, "Cobre": 12.12, "Aluminio": 2.96, "Niquel": 16.84, "Zinc": 3.09, "Estaño": 48.46, "Plomo": 1.75}, {"fecha": "2026-03-16", "Oro": 147713.6, "Plata": 2544.93, "Platino": 64884.45, "Paladio": 48155.89, "Cobre": 12.22, "Aluminio": 2.97, "Niquel": 16.87, "Zinc": 3.1, "Estaño": 48.42, "Plomo": 1.75}, {"fecha": "2026-03-17", "Oro": 147935.35, "Plata": 2557.82, "Platino": 65257.83, "Paladio": 47969.49, "Cobre": 12.29, "Aluminio": 2.99, "Niquel": 17.06, "Zinc": 3.14, "Estaño": 48.22, "Plomo": 1.76}, {"fecha": "2026-03-18", "Oro": 148419.31, "Plata": 2533.77, "Platino": 66326.34, "Paladio": 48761.74, "Cobre": 12.47, "Aluminio": 2.99, "Niquel": 17.18, "Zinc": 3.14, "Estaño": 48.28, "Plomo": 1.78}, {"fecha": "2026-03-19", "Oro": 148224.02, "Plata": 2566.21, "Platino": 66423.18, "Paladio": 48047.28, "Cobre": 12.4, "Aluminio": 2.97, "Niquel": 16.95, "Zinc": 3.12, "Estaño": 48.55, "Plomo": 1.79}, {"fecha": "2026-03-20", "Oro": 149275.65, "Plata": 2565.88, "Platino": 67137.42, "Paladio": 48286.74, "Cobre": 12.42, "Aluminio": 2.98, "Niquel": 16.97, "Zinc": 3.11, "Estaño": 48.1, "Plomo": 1.78}, {"fecha": "2026-03-21", "Oro": 150140.91, "Plata": 2584.25, "Platino": 66899.72, "Paladio": 49318.46, "Cobre": 12.43, "Aluminio": 2.94, "Niquel": 16.91, "Zinc": 3.07, "Estaño": 48.01, "Plomo": 1.77}, {"fecha": "2026-03-22", "Oro": 153082.61, "Plata": 2619.83, "Platino": 66440.99, "Paladio": 48908.94, "Cobre": 12.44, "Aluminio": 2.94, "Niquel": 16.73, "Zinc": 3.08, "Estaño": 47.53, "Plomo": 1.78}, {"fecha": "2026-03-23", "Oro": 153905.73, "Plata": 2633.65, "Platino": 66049.66, "Paladio": 49077.2, "Cobre": 12.45, "Aluminio": 2.96, "Niquel": 16.51, "Zinc": 3.06, "Estaño": 47.45, "Plomo": 1.79}, {"fecha": "2026-03-24", "Oro": 153193.97, "Plata": 2636.57, "Platino": 67132.36, "Paladio": 49238.48, "Cobre": 12.28, "Aluminio": 2.99, "Niquel": 16.55, "Zinc": 3.05, "Estaño": 48.3, "Plomo": 1.8}, {"fecha": "2026-03-25", "Oro": 152573.13, "Plata": 2698.06, "Platino": 67837.72, "Paladio": 48914.37, "Cobre": 12.4, "Aluminio": 2.99, "Niquel": 16.65, "Zinc": 3.01, "Estaño": 48.63, "Plomo": 1.8}, {"fecha": "2026-03-26", "Oro": 151655.13, "Plata": 2696.42, "Platino": 68180.58, "Paladio": 49328.68, "Cobre": 12.49, "Aluminio": 3.01, "Niquel": 16.72, "Zinc": 3.0, "Estaño": 48.59, "Plomo": 1.8}, {"fecha": "2026-03-27", "Oro": 152953.76, "Plata": 2676.7, "Platino": 70449.59, "Paladio": 49433.98, "Cobre": 12.64, "Aluminio": 3.02, "Niquel": 16.7, "Zinc": 3.03, "Estaño": 48.19, "Plomo": 1.83}, {"fecha": "2026-03-28", "Oro": 152354.54, "Plata": 2670.29, "Platino": 70320.36, "Paladio": 48972.61, "Cobre": 12.91, "Aluminio": 3.0, "Niquel": 16.61, "Zinc": 3.01, "Estaño": 48.08, "Plomo": 1.84}, {"fecha": "2026-03-29", "Oro": 152401.1, "Plata": 2707.28, "Platino": 70647.75, "Paladio": 50001.03, "Cobre": 12.87, "Aluminio": 2.97, "Niquel": 16.51, "Zinc": 2.99, "Estaño": 48.56, "Plomo": 1.86}, {"fecha": "2026-03-30", "Oro": 153456.33, "Plata": 2697.64, "Platino": 70728.45, "Paladio": 50466.75, "Cobre": 12.87, "Aluminio": 2.96, "Niquel": 16.47, "Zinc": 3.01, "Estaño": 48.33, "Plomo": 1.86}, {"fecha": "2026-03-31", "Oro": 152660.7, "Plata": 2700.19, "Platino": 70416.42, "Paladio": 50379.4, "Cobre": 12.88, "Aluminio": 2.94, "Niquel": 16.38, "Zinc": 3.02, "Estaño": 48.98, "Plomo": 1.87}, {"fecha": "2026-04-01", "Oro": 152457.92, "Plata": 2722.91, "Platino": 71895.85, "Paladio": 50038.41, "Cobre": 13.11, "Aluminio": 2.96, "Niquel": 16.41, "Zinc": 3.05, "Estaño": 48.35, "Plomo": 1.9}, {"fecha": "2026-04-02", "Oro": 150402.71, "Plata": 2686.42, "Platino": 72697.6, "Paladio": 49645.57, "Cobre": 12.89, "Aluminio": 2.96, "Niquel": 16.46, "Zinc": 3.09, "Estaño": 48.25, "Plomo": 1.9}, {"fecha": "2026-04-03", "Oro": 149494.18, "Plata": 2611.34, "Platino": 71289.85, "Paladio": 50395.91, "Cobre": 12.95, "Aluminio": 2.98, "Niquel": 16.4, "Zinc": 3.11, "Estaño": 49.05, "Plomo": 1.92}, {"fecha": "2026-04-04", "Oro": 149365.63, "Plata": 2605.58, "Platino": 70690.16, "Paladio": 50330.81, "Cobre": 12.78, "Aluminio": 2.99, "Niquel": 16.45, "Zinc": 3.1, "Estaño": 48.12, "Plomo": 1.91}, {"fecha": "2026-04-05", "Oro": 150538.38, "Plata": 2595.27, "Platino": 70687.34, "Paladio": 50612.32, "Cobre": 12.5, "Aluminio": 3.02, "Niquel": 16.44, "Zinc": 3.13, "Estaño": 48.71, "Plomo": 1.91}, {"fecha": "2026-04-06", "Oro": 152644.73, "Plata": 2556.02, "Platino": 70859.36, "Paladio": 50501.32, "Cobre": 12.34, "Aluminio": 3.05, "Niquel": 16.54, "Zinc": 3.17, "Estaño": 47.89, "Plomo": 1.93}, {"fecha": "2026-04-07", "Oro": 153092.94, "Plata": 2563.51, "Platino": 69360.67, "Paladio": 50854.88, "Cobre": 12.31, "Aluminio": 3.04, "Niquel": 16.74, "Zinc": 3.18, "Estaño": 48.01, "Plomo": 1.92}, {"fecha": "2026-04-08", "Oro": 153984.72, "Plata": 2551.1, "Platino": 67431.02, "Paladio": 50700.63, "Cobre": 12.62, "Aluminio": 3.05, "Niquel": 16.89, "Zinc": 3.19, "Estaño": 48.14, "Plomo": 1.93}, {"fecha": "2026-04-09", "Oro": 154998.52, "Plata": 2459.85, "Platino": 68143.41, "Paladio": 50556.98, "Cobre": 12.95, "Aluminio": 3.07, "Niquel": 17.17, "Zinc": 3.32, "Estaño": 48.69, "Plomo": 1.92}];
+
+// ================================================================
+// INIT
+// ================================================================
+async function init(){
+  M = DB.map(d => {
+    const p=d.raw*d.fac, mx=d.rawMx*d.fac, mn=d.rawMn*d.fac, v=d.rawV*d.fac;
+    return {...d, price:p, prev:p, base:p, high:mx, low:mn, open:p-v, pct:d.pct};
+  });
+  sel = M[0];
+  // Chart data built from history after fetch
+
+  // Populate history mineral selector
+  const sel2 = document.getElementById('histMineral');
+  M.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.id;
+    opt.textContent = m.sym + ' — ' + m.name;
+    sel2.appendChild(opt);
+  });
+  sel2.onchange = renderHistory;
+
+  document.getElementById('ltx').textContent = 'Cargando datos...';
+  
+  // Cargar datos embebidos como base (90 días)
+  historyData = [...HIST_EMBED].reverse(); // newest first
+  buildChartArrays();
+  
+  // Intentar actualizar con datos reales de Google Sheets
+  await fetchSheet();
+  await fetchHistory();
+  buildChartArrays();
+  updClock(); updInfo(); render(); renderSum(); renderTbl(); updStatus();
+  setTimeout(() => document.getElementById('lo').classList.add('h'), 700);
+
+  setInterval(mainTick, 1000);
+  setInterval(fetchSheet, SHEET_INTERVAL);
+  setInterval(fetchHistory, 120000); // history every 2 min
+}
+
+// ================================================================
+// TAB SWITCHING
+// ================================================================
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('a'));
+  document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('a');
+
+  if (tab === 'dashboard') {
+    document.getElementById('mainLayout').classList.remove('hidden');
+    document.getElementById('histPanel').classList.remove('active');
+  } else {
+    document.getElementById('mainLayout').classList.add('hidden');
+    document.getElementById('histPanel').classList.add('active');
+    renderHistory();
+  }
+}
+
+// ================================================================
+// MANUAL UPDATE BUTTON
+// ================================================================
+async function manualUpdate() {
+  const btn = document.getElementById('btnUpdate');
+  btn.classList.add('loading');
+  try {
+    await fetchSheet();
+    await fetchHistory();
+  } finally {
+    btn.classList.remove('loading');
+  }
+}
+
+// ================================================================
+// SMART FETCH — intenta directo, si CORS falla usa proxy
+// ================================================================
+const CORS_PROXIES = [
+  url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+  url => 'https://corsproxy.io/?' + encodeURIComponent(url),
+];
+
+async function smartFetch(url) {
+  // Intento 1: directo (funciona en GitHub Pages / servidor)
+  try {
+    const r = await fetch(url + '&_t=' + Date.now(), {cache:'no-cache'});
+    if(r.ok) { const t = await r.text(); if(t.length > 10) return t; }
+  } catch(e) {
+    console.log('⚠️ Fetch directo falló (CORS), intentando proxy...');
+  }
+  // Intento 2-3: proxies CORS (para abrir como file://)
+  for(const proxy of CORS_PROXIES) {
+    try {
+      const r = await fetch(proxy(url), {cache:'no-cache'});
+      if(r.ok) { const t = await r.text(); if(t.length > 10) { console.log('✅ Proxy CORS funcionó'); return t; } }
+    } catch(e) { continue; }
+  }
+  throw new Error('No se pudo conectar a Google Sheets');
+}
+
+// ================================================================
+// GOOGLE SHEETS CSV FETCH — CURRENT PRICES
+// ================================================================
+async function fetchSheet(){
+  try{
+    const t = await smartFetch(SHEET_URL);
+    const parsed = parseCSV(t);
+    if(parsed && Object.keys(parsed).length >= 3){
+      lastSheetData = parsed;
+      sheetsOK = true;
+      src = 'sheets';
+      lastUpdateTime = new Date();
+      M.forEach(m => {
+        const names = [m.name, m.name.normalize('NFD').replace(/[\u0300-\u036f]/g,''), m.sym];
+        for(const n of names){
+          if(parsed[n] && parsed[n] > 0){
+            m.base = parsed[n];
+            if(Math.abs(m.price-m.base)/m.base > 0.05) m.price = m.base;
+            break;
+          }
+        }
+      });
+      document.getElementById('lastUpd').textContent = 'Última act: ' + lastUpdateTime.toLocaleDateString('es-VE',{day:'2-digit',month:'short'});
+      console.log('✅ Datos:', Object.keys(parsed).length, 'minerales', parsed);
+    }
+  } catch(e) {
+    console.warn('Sheets fetch:', e);
+    if(!sheetsOK) src = 'sim';
+  }
+  updStatus();
+}
+
+// ================================================================
+// GOOGLE SHEETS CSV FETCH — HISTORY
+// ================================================================
+async function fetchHistory(){
+  try {
+    const t = await smartFetch(HISTORY_URL);
+    const parsed = parseHistoryCSV(t);
+    if(parsed && parsed.length > 0){
+      // Merge: embedded data + sheets data (sheets wins on matching dates)
+      const sheetsMap = {};
+      parsed.forEach(r => { if(r.fecha) sheetsMap[r.fecha] = r; });
+      
+      // Start with embedded data (newest first)
+      const embeddedReversed = [...HIST_EMBED].reverse();
+      const merged = [];
+      const usedDates = new Set();
+      
+      // First add all sheets data (most recent, takes priority)
+      parsed.forEach(r => {
+        if(r.fecha && !usedDates.has(r.fecha)){
+          merged.push(r);
+          usedDates.add(r.fecha);
+        }
+      });
+      
+      // Then add embedded data for dates not in sheets
+      embeddedReversed.forEach(r => {
+        if(r.fecha && !usedDates.has(r.fecha)){
+          merged.push(r);
+          usedDates.add(r.fecha);
+        }
+      });
+      
+      // Sort newest first
+      merged.sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
+      historyData = merged;
+      
+      console.log('✅ Historial:', merged.length, 'registros (Sheets:', parsed.length, '+ Embebidos)');
+      buildChartArrays();
+      renderHistory();
+      render();
+    }
+  } catch(e) {
+    console.warn('History fetch:', e);
+    // Embedded data already loaded, no action needed
+  }
+}
+
+// Normalize any date format to YYYY-MM-DD
+function normalizeFecha(s){
+  if(!s) return null;
+  s=String(s).trim();
+  // Already YYYY-MM-DD
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // YYYY-MM-DD with extra time info
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+  // MM/DD/YYYY or M/D/YYYY (US format from Google Sheets)
+  const us=/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(s);
+  if(us) return us[3]+'-'+us[1].padStart(2,'0')+'-'+us[2].padStart(2,'0');
+  // DD/MM/YYYY
+  const eu=/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(s);
+  if(eu) return eu[3]+'-'+eu[2].padStart(2,'0')+'-'+eu[1].padStart(2,'0');
+  // Google Sheets serial number (days since 1899-12-30)
+  const num=parseFloat(s);
+  if(!isNaN(num)&&num>40000&&num<60000){
+    const d=new Date((num-25569)*86400000);
+    return d.toISOString().slice(0,10);
+  }
+  // Try Date parse
+  const d=new Date(s);
+  if(!isNaN(d.getTime())) return d.toISOString().slice(0,10);
+  return s;
+}
+
+// Format date for chart X axis: "25/03" from "2026-03-25"
+function fmtFechaCorta(f){
+  if(!f) return '';
+  const p=String(f).split('-');
+  if(p.length>=3) return p[2]+'/'+p[1];
+  return String(f).slice(-5);
+}
+
+function parseHistoryCSV(text){
+  const lines = text.split('\n').map(l=>l.trim()).filter(l=>l);
+  if(lines.length < 2) return [];
+  
+  const hdr = splitCSVLine(lines[0]).map(h=>h.replace(/"/g,'').trim());
+  
+  // Detect column positions
+  const colFecha = hdr.findIndex(h=>h.toLowerCase().includes('fecha') || h.toLowerCase().includes('date'));
+  if(colFecha === -1) return [];
+  
+  // Map mineral columns
+  const mineralCols = {};
+  const mineralNames = ['Oro','Plata','Platino','Paladio','Cobre','Aluminio','Níquel','Niquel','Zinc','Estaño','Plomo'];
+  
+  hdr.forEach((h, idx) => {
+    if(idx === colFecha) return;
+    const clean = h.normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+    for(const mn of mineralNames){
+      const mnClean = mn.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      if(clean.toLowerCase().includes(mnClean.toLowerCase())){
+        mineralCols[mn === 'Níquel' ? 'Niquel' : mn] = idx;
+        break;
+      }
+    }
+  });
+  
+  const rows = [];
+  for(let i=1; i<lines.length; i++){
+    const cols = splitCSVLine(lines[i]);
+    if(cols.length < 2) continue;
+    
+    let fechaRaw = (cols[colFecha]||'').replace(/"/g,'').trim();
+    if(!fechaRaw) continue;
+    // Normalize date to YYYY-MM-DD format
+    const fecha = normalizeFecha(fechaRaw);
+    if(!fecha) continue;
+    
+    const row = { fecha };
+    for(const [mineral, colIdx] of Object.entries(mineralCols)){
+      const val = parseNum(cols[colIdx]);
+      if(!isNaN(val) && val > 0) row[mineral] = val;
+    }
+    
+    if(Object.keys(row).length > 1) rows.push(row);
+  }
+  
+  return rows.reverse(); // most recent first
+}
+
+// ================================================================
+// RENDER HISTORY TABLE
+// ================================================================
+function renderHistory(){
+  const filter = document.getElementById('histMineral').value;
+  const empty = document.getElementById('histEmpty');
+  const table = document.getElementById('histTable');
+  const thead = document.getElementById('histThead');
+  const tbody = document.getElementById('histTbody');
+  const subtitle = document.getElementById('histSubtitle');
+  
+  if(!historyData || historyData.length === 0){
+    empty.style.display = 'block';
+    table.style.display = 'none';
+    subtitle.textContent = 'Sin datos históricos disponibles';
+    return;
+  }
+  
+  empty.style.display = 'none';
+  table.style.display = 'table';
+  
+  // Determine which minerals to show
+  const allMinerals = ['Oro','Plata','Platino','Paladio','Cobre','Aluminio','Niquel','Zinc','Estaño','Plomo'];
+  let minerals;
+  
+  if(filter === 'all'){
+    minerals = allMinerals.filter(m => historyData.some(r => r[m]));
+  } else {
+    const found = M.find(m=>m.id===filter);
+    if(found){
+      const name = found.name === 'Níquel' ? 'Niquel' : found.name;
+      minerals = [name];
+    } else {
+      minerals = allMinerals;
+    }
+  }
+  
+  subtitle.textContent = historyData.length + ' registros históricos — ' + minerals.length + ' minerales';
+  
+  // Build header
+  let hdrHTML = '<tr><th style="text-align:left">Fecha</th>';
+  minerals.forEach(m => {
+    const sym = DB.find(d => d.name === m || d.name === 'Níquel' && m === 'Niquel');
+    hdrHTML += `<th>${sym ? sym.sym : m}<br><span style="font-size:7px;opacity:.6">USD/kg</span></th>`;
+  });
+  hdrHTML += '</tr>';
+  thead.innerHTML = hdrHTML;
+  
+  // Build rows
+  const today = new Date().toISOString().slice(0,10);
+  let bodyHTML = '';
+  
+  historyData.forEach(row => {
+    const isToday = row.fecha && row.fecha.includes(today);
+    bodyHTML += `<tr class="${isToday ? 'today' : ''}">`;
+    bodyHTML += `<td style="white-space:nowrap">${row.fecha}</td>`;
+    
+    minerals.forEach(m => {
+      const val = row[m];
+      if(val != null && !isNaN(val)){
+        bodyHTML += `<td>${fp(val)}</td>`;
+      } else {
+        bodyHTML += `<td style="color:var(--t3)">—</td>`;
+      }
+    });
+    bodyHTML += '</tr>';
+  });
+  
+  tbody.innerHTML = bodyHTML;
+}
+
+// ================================================================
+// CSV PARSING (shared)
+// ================================================================
+function parseNum(s){
+  if(typeof s==='number') return s; if(!s) return NaN;
+  s=s.trim().replace(/"/g,'').replace(/[()]/g,'');
+  if(s.includes(',')&&s.includes('.')){
+    const lc=s.lastIndexOf(','), ld=s.lastIndexOf('.');
+    if(ld>lc) s=s.replace(/,/g,'');
+    else s=s.replace(/\./g,'').replace(',','.');
+  } else if(s.includes(',')){
+    const parts=s.split(',');
+    if(parts.length===2&&parts[1].length<=2) s=s.replace(',','.');
+    else s=s.replace(/,/g,'');
+  }
+  return parseFloat(s);
+}
+
+function splitCSVLine(line){
+  const result=[]; let current='', inQuotes=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"') inQuotes=!inQuotes;
+    else if(ch===','&&!inQuotes){ result.push(current.trim()); current=''; }
+    else current+=ch;
+  }
+  result.push(current.trim());
+  return result;
+}
+
+function parseCSV(text){
+  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l);
+  if(lines.length<4) return null;
+  let hdrIdx=-1;
+  for(let i=0;i<Math.min(lines.length,5);i++){
+    const low=lines[i].toLowerCase();
+    if(low.includes('mineral')&&(low.includes('usd')||low.includes('mbol')||low.includes('ultimo')||low.includes('ltimo'))){
+      hdrIdx=i; break;
+    }
+  }
+  if(hdrIdx===-1) return parseCSV_legacy(text);
+  const hdr=splitCSVLine(lines[hdrIdx]).map(h=>h.replace(/"/g,'').trim().toLowerCase());
+  const colMineral=hdr.findIndex(h=>h.includes('mineral'));
+  const colSym=hdr.findIndex(h=>h.includes('mbol')||h.includes('sym'));
+  let colUsdKg=hdr.findIndex(h=>h==='usd/kg'||h==='usd_kg');
+  if(colUsdKg===-1) colUsdKg=hdr.findIndex(h=>h.includes('usd/kg')||h.includes('usd_kg'));
+  if(colUsdKg===-1) colUsdKg=hdr.findIndex(h=>h.includes('usd')&&!h.includes('max')&&!h.includes('min')&&!h.includes('var')&&!h.includes('original'));
+  if(colUsdKg===-1) colUsdKg=5;
+  const colRaw=hdr.findIndex(h=>h.includes('ltimo')||h.includes('ultimo')||h.includes('raw'));
+  const colFactor=hdr.findIndex(h=>h.includes('factor'));
+  const prices={};
+  for(let i=hdrIdx+1;i<lines.length;i++){
+    const cols=splitCSVLine(lines[i]);
+    if(cols.length<3) continue;
+    const name=(cols[colMineral>=0?colMineral:0]||'').replace(/"/g,'').trim();
+    if(!name||name.toLowerCase().includes('resumen')||name.toLowerCase().includes('total')||name.includes('MINERAL')) continue;
+    let usdkg=parseNum(cols[colUsdKg]);
+    if((isNaN(usdkg)||usdkg<=0)&&colRaw>=0&&colFactor>=0){
+      const raw=parseNum(cols[colRaw]); const fac=parseNum(cols[colFactor]);
+      if(!isNaN(raw)&&!isNaN(fac)&&raw>0&&fac>0) usdkg=raw*fac;
+    }
+    if(!isNaN(usdkg)&&usdkg>0){
+      prices[name]=usdkg;
+      const norm=name.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      if(norm!==name) prices[norm]=usdkg;
+      if(colSym>=0){
+        const sym=(cols[colSym]||'').replace(/"/g,'').trim();
+        if(sym) prices[sym]=usdkg;
+      }
+    }
+  }
+  return Object.keys(prices).length>0?prices:null;
+}
+
+function parseCSV_legacy(text){
+  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l);
+  if(lines.length<2) return null;
+  const hdr=lines[0].split(',').map(h=>h.replace(/"/g,'').trim());
+  let best=null, bestYear=0;
+  for(let i=lines.length-1;i>=1;i--){
+    const cols=lines[i].split(',').map(c=>c.replace(/"/g,'').trim());
+    const yr=parseInt(cols[0]);
+    if(!isNaN(yr)&&yr>1900&&yr>bestYear){bestYear=yr;best=cols;break}
+  }
+  if(!best) return null;
+  const prices={};
+  const nameMap={'oro':'Oro','plata':'Plata','cobre':'Cobre','aluminio':'Aluminio','niquel':'Niquel','zinc':'Zinc','estano':'Estaño','plomo':'Plomo','platino':'Platino','paladio':'Paladio'};
+  for(let j=1;j<hdr.length;j++){
+    const h=hdr[j].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    for(const[k,v]of Object.entries(nameMap)){if(h.includes(k)){if(j<best.length){const val=parseNum(best[j]);if(!isNaN(val)&&val>0)prices[v]=val;}break}}
+  }
+  return prices;
+}
+
+// ================================================================
+// STATUS UI
+// ================================================================
+function updStatus(){
+  const el=document.getElementById('sts'), tx=document.getElementById('stx'),
+        bg=document.getElementById('bdg'), ss=document.getElementById('sS');
+  el.className='sts M';
+  if(src==='sheets'){
+    el.classList.add('ok'); tx.textContent='CONECTADO';
+    bg.className='badge ok M'; bg.textContent='🟢 Datos Reales';
+    ss.textContent='Conectado'; ss.style.color='var(--grn)';
+  } else {
+    el.classList.add('sim'); tx.textContent='SIMULADO';
+    bg.className='badge sim M'; bg.textContent='🟡 Simulado';
+    ss.textContent='Datos Simulados'; ss.style.color='var(--gold)';
+  }
+}
+
+// ================================================================
+// CHART DATA FROM HISTORY (Google Sheets real data)
+// ================================================================
+// Map mineral name to id for chart lookup
+const nameToId={'Oro':'gold','Plata':'silver','Platino':'plat','Paladio':'pall','Cobre':'copper','Aluminio':'alum','Niquel':'nickel','Níquel':'nickel','Zinc':'zinc','Estaño':'tin','Plomo':'lead'};
+const idToName={'gold':'Oro','silver':'Plata','plat':'Platino','pall':'Paladio','copper':'Cobre','alum':'Aluminio','nickel':'Niquel','zinc':'Zinc','tin':'Estaño','lead':'Plomo'};
+
+function getChartData(mineralId){
+  const name=idToName[mineralId];
+  if(!name||!historyData||historyData.length===0) return [];
+  // historyData is newest-first from parseHistoryCSV, we need oldest-first for chart
+  const sorted=[...historyData].reverse();
+  const pts=[];
+  sorted.forEach(row=>{
+    const v=row[name];
+    if(v&&v>0) pts.push({fecha:row.fecha, v:v});
+  });
+  // cRange=0 means show all, otherwise show last N days
+  if(cRange>0&&pts.length>cRange) return pts.slice(-cRange);
+  return pts;
+}
+
+function buildChartArrays(){
+  M.forEach(m=>{
+    const pts=getChartData(m.id);
+    if(pts.length>0){
+      // Update price from latest history point
+      m.price=pts[pts.length-1].v;
+      m.prev=pts.length>1?pts[pts.length-2].v:m.price;
+      m.pct=m.prev>0?((m.price-m.prev)/m.prev)*100:0;
+      m.high=Math.max(...pts.map(p=>p.v));
+      m.low=Math.min(...pts.map(p=>p.v));
+    }
+  });
+}
+
+// ================================================================
+// CHART — renders real data from Google Sheets history
+// ================================================================
+function render(){
+  const cv=document.getElementById('mc'),ct=cv.parentElement,dpr=devicePixelRatio||1,rc=ct.getBoundingClientRect();
+  if(rc.width<10||rc.height<10)return;
+  cv.width=rc.width*dpr;cv.height=rc.height*dpr;cv.style.width=rc.width+'px';cv.style.height=rc.height+'px';
+  const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);const W=rc.width,H=rc.height;
+  const cs=getComputedStyle(document.body),C={g:cs.getPropertyValue('--grid').trim(),m:cs.getPropertyValue('--t3').trim(),bu:cs.getPropertyValue('--bull').trim(),bb:cs.getPropertyValue('--bullB').trim(),be:cs.getPropertyValue('--bear').trim(),beb:cs.getPropertyValue('--bearB').trim(),bl:cs.getPropertyValue('--blue').trim(),gn:cs.getPropertyValue('--grn').trim(),rd:cs.getPropertyValue('--red').trim(),bg:cs.getPropertyValue('--chart').trim()};
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);if(!sel)return;
+  const pts=getChartData(sel.id);
+  if(pts.length<2){ctx.fillStyle=C.m;ctx.font='12px DM Sans';ctx.textAlign='center';ctx.fillText('Sin datos históricos suficientes',W/2,H/2);return;}
+  cType==='candle'?drawCandles(ctx,W,H,pts,C):drawLine(ctx,W,H,pts,C);
+}
+function drawCandles(x,W,H,pts,C){
+  const p={t:16,r:80,b:28,l:8},cw=W-p.l-p.r,ch=H-p.t-p.b;
+  // Build candle data: each day = one candle, open=prev close, close=today price
+  const candles=pts.map((pt,i)=>{
+    const prev=i>0?pts[i-1].v:pt.v;
+    const o=prev,cl=pt.v;
+    const spread=Math.abs(cl-o)*0.3||pt.v*0.002;
+    const h=Math.max(o,cl)+spread*Math.random();
+    const l=Math.min(o,cl)-spread*Math.random();
+    return {fecha:pt.fecha,o,h,l,c:cl};
+  });
+  let mn=1/0,mx=-1/0;candles.forEach(c=>{mn=Math.min(mn,c.l);mx=Math.max(mx,c.h)});
+  const rng=mx-mn||1;mn-=rng*.06;mx+=rng*.06;const tot=mx-mn;
+  const yS=v=>p.t+ch-((v-mn)/tot)*ch,gap=cw/candles.length,bw=Math.max(2,Math.min(gap*.65,20));
+  // Grid + Y labels
+  x.strokeStyle=C.g;x.lineWidth=.5;for(let i=0;i<=5;i++){const y=p.t+(ch/5)*i;x.beginPath();x.moveTo(p.l,y);x.lineTo(W-p.r,y);x.stroke();x.fillStyle=C.m;x.font='8px JetBrains Mono';x.textAlign='left';x.fillText(fp(mx-(tot/5)*i),W-p.r+4,y+3)}
+  // Candles
+  candles.forEach((c,i)=>{const cx=p.l+i*gap+gap/2,bl=c.c>=c.o,tp=yS(Math.max(c.o,c.c)),bt=yS(Math.min(c.o,c.c)),bH=Math.max(1,bt-tp);x.strokeStyle=bl?C.bu:C.be;x.lineWidth=1;x.beginPath();x.moveTo(cx,yS(c.h));x.lineTo(cx,yS(c.l));x.stroke();x.fillStyle=bl?C.bu:C.be;x.globalAlpha=.85;x.fillRect(cx-bw/2,tp,bw,bH);x.globalAlpha=1;x.strokeStyle=bl?C.bb:C.beb;x.lineWidth=.5;x.strokeRect(cx-bw/2,tp,bw,bH)});
+  // Last price line
+  const lc=candles[candles.length-1].c,yL=yS(lc);x.setLineDash([3,2]);x.strokeStyle=C.bl+'88';x.lineWidth=1;x.beginPath();x.moveTo(p.l,yL);x.lineTo(W-p.r,yL);x.stroke();x.setLineDash([]);
+  x.fillStyle=C.bl;x.fillRect(W-p.r,yL-7,74,14);x.fillStyle='#fff';x.font='bold 8px JetBrains Mono';x.textAlign='left';x.fillText(fp(lc),W-p.r+3,yL+3);
+  // X labels — real dates from Sheets
+  x.fillStyle=C.m;x.font='7px JetBrains Mono';x.textAlign='center';
+  const st=Math.max(1,Math.floor(candles.length/7));
+  for(let i=0;i<candles.length;i+=st){
+    x.fillText(fmtFechaCorta(candles[i].fecha),p.l+i*gap+gap/2,H-8);
+  }
+  // Crosshair
+  if(hoverActive&&hoverX>=p.l&&hoverX<=W-p.r&&hoverY>=p.t&&hoverY<=p.t+ch){
+    x.strokeStyle=C.m+'66';x.lineWidth=.5;x.setLineDash([3,3]);
+    x.beginPath();x.moveTo(hoverX,p.t);x.lineTo(hoverX,p.t+ch);x.stroke();
+    x.beginPath();x.moveTo(p.l,hoverY);x.lineTo(W-p.r,hoverY);x.stroke();x.setLineDash([]);
+    const priceAtY=mn+((p.t+ch-hoverY)/ch)*tot;
+    x.fillStyle=C.bl;x.fillRect(W-p.r,hoverY-7,74,14);
+    x.fillStyle='#fff';x.font='bold 8px JetBrains Mono';x.textAlign='left';x.fillText(fp(priceAtY),W-p.r+3,hoverY+3);
+    const ci=Math.floor((hoverX-p.l)/gap);
+    if(ci>=0&&ci<candles.length){
+      const tag=fp(candles[ci].c);const tw2=tag.length*5.5+12;const tx=Math.min(hoverX+10,W-p.r-tw2);
+      x.fillStyle=C.bg;x.globalAlpha=.9;x.fillRect(tx,hoverY-22,tw2,16);x.globalAlpha=1;
+      x.strokeStyle=C.bl+'55';x.lineWidth=.5;x.strokeRect(tx,hoverY-22,tw2,16);
+      x.fillStyle='#fff';x.font='bold 9px JetBrains Mono';x.textAlign='left';x.fillText(tag,tx+6,hoverY-11);
+    }
+  }
+}
+
+function drawLine(x,W,H,pts,C){
+  const p={t:16,r:80,b:28,l:8},cw=W-p.l-p.r,ch=H-p.t-p.b;
+  let mn=1/0,mx=-1/0;pts.forEach(pt=>{mn=Math.min(mn,pt.v);mx=Math.max(mx,pt.v)});
+  const rng=mx-mn||1;mn-=rng*.06;mx+=rng*.06;const tot=mx-mn;
+  const xS=i=>p.l+(i/(pts.length-1))*cw, yS=v=>p.t+ch-((v-mn)/tot)*ch;
+  // Grid
+  x.strokeStyle=C.g;x.lineWidth=.5;for(let i=0;i<=5;i++){const y=p.t+(ch/5)*i;x.beginPath();x.moveTo(p.l,y);x.lineTo(W-p.r,y);x.stroke();x.fillStyle=C.m;x.font='8px JetBrains Mono';x.textAlign='left';x.fillText(fp(mx-(tot/5)*i),W-p.r+4,y+3)}
+  // Area + Line
+  const up=pts[pts.length-1].v>=pts[0].v, lc=up?C.gn:C.rd;
+  const gr=x.createLinearGradient(0,p.t,0,p.t+ch);gr.addColorStop(0,lc+'22');gr.addColorStop(1,lc+'00');
+  x.beginPath();x.moveTo(xS(0),yS(pts[0].v));pts.forEach((pt,i)=>x.lineTo(xS(i),yS(pt.v)));x.lineTo(xS(pts.length-1),p.t+ch);x.lineTo(xS(0),p.t+ch);x.closePath();x.fillStyle=gr;x.fill();
+  x.beginPath();x.moveTo(xS(0),yS(pts[0].v));pts.forEach((pt,i)=>x.lineTo(xS(i),yS(pt.v)));x.strokeStyle=lc+'44';x.lineWidth=4;x.stroke();
+  x.beginPath();x.moveTo(xS(0),yS(pts[0].v));pts.forEach((pt,i)=>x.lineTo(xS(i),yS(pt.v)));x.strokeStyle=lc;x.lineWidth=1.5;x.stroke();
+  // Last price
+  const lv=pts[pts.length-1].v,yL=yS(lv);x.setLineDash([3,2]);x.strokeStyle=C.bl+'88';x.lineWidth=1;x.beginPath();x.moveTo(p.l,yL);x.lineTo(W-p.r,yL);x.stroke();x.setLineDash([]);
+  x.fillStyle=C.bl;x.fillRect(W-p.r,yL-7,74,14);x.fillStyle='#fff';x.font='bold 8px JetBrains Mono';x.textAlign='left';x.fillText(fp(lv),W-p.r+3,yL+3);
+  x.beginPath();x.arc(xS(pts.length-1),yL,3,0,Math.PI*2);x.fillStyle=lc;x.fill();
+  // X labels — real dates
+  x.fillStyle=C.m;x.font='7px JetBrains Mono';x.textAlign='center';
+  const st=Math.max(1,Math.floor(pts.length/7));
+  for(let i=0;i<pts.length;i+=st){
+    x.fillText(fmtFechaCorta(pts[i].fecha),xS(i),H-8);
+  }
+  // Crosshair
+  if(hoverActive&&hoverX>=p.l&&hoverX<=W-p.r&&hoverY>=p.t&&hoverY<=p.t+ch){
+    x.strokeStyle=C.m+'66';x.lineWidth=.5;x.setLineDash([3,3]);
+    x.beginPath();x.moveTo(hoverX,p.t);x.lineTo(hoverX,p.t+ch);x.stroke();
+    x.beginPath();x.moveTo(p.l,hoverY);x.lineTo(W-p.r,hoverY);x.stroke();x.setLineDash([]);
+    const priceAtY=mn+((p.t+ch-hoverY)/ch)*tot;
+    x.fillStyle=C.bl;x.fillRect(W-p.r,hoverY-7,74,14);
+    x.fillStyle='#fff';x.font='bold 8px JetBrains Mono';x.textAlign='left';x.fillText(fp(priceAtY),W-p.r+3,hoverY+3);
+    const ci=Math.round(((hoverX-p.l)/cw)*(pts.length-1));
+    if(ci>=0&&ci<pts.length){
+      const pv=pts[ci].v,py=yS(pv);
+      x.beginPath();x.arc(hoverX,py,4,0,Math.PI*2);x.fillStyle=lc;x.fill();
+      x.beginPath();x.arc(hoverX,py,2,0,Math.PI*2);x.fillStyle='#fff';x.fill();
+      const tag=fp(pv);const tw2=tag.length*5.5+12;const tx=Math.min(hoverX+10,W-p.r-tw2);
+      x.fillStyle=C.bg;x.globalAlpha=.9;x.fillRect(tx,py-22,tw2,16);x.globalAlpha=1;
+      x.strokeStyle=C.bl+'55';x.lineWidth=.5;x.strokeRect(tx,py-22,tw2,16);
+      x.fillStyle='#fff';x.font='bold 9px JetBrains Mono';x.textAlign='left';x.fillText(tag,tx+6,py-11);
+    }
+  }
+}
+
+// ================================================================
+// RENDERS
+// ================================================================
+function gf(){return filter==='all'?M:M.filter(m=>m.cat===filter)}
+
+window.selM = id => { sel=M.find(m=>m.id===id); updInfo(); render(); renderSum(); renderTbl(); };
+
+function updClock(){
+  const n=new Date();
+  document.getElementById('clk').textContent=n.toLocaleDateString('es-VE',{day:'2-digit',month:'short',year:'numeric'});
+}
+
+function mainTick(){
+  ticks++;
+  document.getElementById('cnt').textContent='Ticks: '+ticks.toLocaleString('es-VE');
+  updClock(); updInfo(); renderSum(); renderTbl();
+}
+
+function renderSum(){
+  document.getElementById('sbar').innerHTML=gf().map(m=>{
+    const d=m.pct>=0?'up':'dn', a=m.id===sel.id?'a':'';
+    return`<div class="si ${a}" onclick="selM('${m.id}')"><div class="sn M">${m.sym} ${m.name}</div><div class="sp M">${fp(m.price)}</div><div class="sc M ${d}">${fpct(m.pct)}</div></div>`;
+  }).join('');
+}
+
+function renderTbl(){
+  const list=gf();
+  document.getElementById('mcnt').textContent=list.length;
+  document.getElementById('tb').innerHTML=list.map(m=>{
+    const d=m.pct>=0?'up':'dn', a=m.id===sel.id?'a':'', fl=Math.abs(m.price-m.prev)>m.base*.0001?'pf':'';
+    return`<tr class="${a}" onclick="selM('${m.id}')"><td><div class="mc"><div class="md" style="background:${m.color}"></div><div><span class="ms">${m.sym}</span><span class="mf">${m.name}</span></div></div></td><td class="${fl}">${fp(m.price)}</td><td><span class="cb ${d}">${fpct(m.pct)}</span></td><td style="font-size:8px;color:var(--t3)">${m.ex}</td></tr>`;
+  }).join('');
+}
+
+function updInfo(){
+  if(!sel) return;
+  const m=sel;
+  document.getElementById('cic').textContent=m.sym;
+  document.getElementById('cic').style.cssText=`background:${m.color}18;color:${m.color};border:1px solid ${m.color}33;width:34px;height:34px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace`;
+  document.getElementById('cnm').textContent=m.name;
+  document.getElementById('cun').textContent=`USD/kg — ${m.ex} | ${m.rawU} × ${fmtES(m.fac,2)}`;
+  document.getElementById('cpx').textContent=fp(m.price);
+  document.getElementById('cpx').style.color=m.pct>=0?'var(--grn)':'var(--red)';
+  const ce=document.getElementById('ccx');
+  ce.textContent=fpct(m.pct);
+  ce.style.color=m.pct>=0?'var(--grn)':'var(--red)';
+  document.getElementById('sH').textContent=fp(m.high);
+  document.getElementById('sL').textContent=fp(m.low);
+  const sv=document.getElementById('sV');sv.textContent=fpct(m.pct);sv.style.color=m.pct>=0?'var(--grn)':'var(--red)';
+  const sp=document.getElementById('sP');sp.textContent=fp(m.prev);sp.style.color='var(--t1)';
+}
+
+// ================================================================
+// EVENTS
+// ================================================================
+document.getElementById('thm').onclick=()=>{
+  const b=document.body,c=b.getAttribute('data-theme'),n=c==='dark'?'light':'dark';
+  b.setAttribute('data-theme',n);
+  document.getElementById('ti').textContent=n==='dark'?'🌙':'☀️';
+  document.getElementById('tl').textContent=n==='dark'?'Oscuro':'Claro';
+  setTimeout(render,50);
+  try{localStorage.setItem('mb-t',n)}catch(e){}
+};
+try{if(localStorage.getItem('mb-t')==='light'){document.body.setAttribute('data-theme','light');document.getElementById('ti').textContent='☀️';document.getElementById('tl').textContent='Claro'}}catch(e){}
+
+document.querySelectorAll('.btn[data-f]').forEach(b=>b.onclick=function(){
+  document.querySelectorAll('.btn[data-f]').forEach(x=>x.classList.remove('a'));
+  this.classList.add('a'); filter=this.dataset.f; renderSum(); renderTbl();
+});
+document.querySelectorAll('.ccb[data-r]').forEach(b=>b.onclick=function(){
+  document.querySelectorAll('.ccb').forEach(x=>x.classList.remove('a'));
+  this.classList.add('a'); cRange=parseInt(this.dataset.r); render();
+});
+
+document.getElementById('tct').onclick=()=>{cType='candle';document.getElementById('tct').classList.add('a');document.getElementById('tln').classList.remove('a');render()};
+document.getElementById('tln').onclick=()=>{cType='line';document.getElementById('tln').classList.add('a');document.getElementById('tct').classList.remove('a');render()};
+window.onresize=render;
+
+// Crosshair hover events
+const mcv=document.getElementById('mc');
+mcv.addEventListener('mousemove',e=>{
+  const r=mcv.getBoundingClientRect();
+  hoverX=e.clientX-r.left;hoverY=e.clientY-r.top;hoverActive=true;render();
+});
+mcv.addEventListener('mouseleave',()=>{hoverActive=false;render()});
+mcv.addEventListener('touchmove',e=>{
+  e.preventDefault();const t=e.touches[0],r=mcv.getBoundingClientRect();
+  hoverX=t.clientX-r.left;hoverY=t.clientY-r.top;hoverActive=true;render();
+},{passive:false});
+mcv.addEventListener('touchend',()=>{hoverActive=false;render()});
+mcv.style.cursor='crosshair';
+
+init();
+</script>
+</body>
+</html>
